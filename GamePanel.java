@@ -18,7 +18,7 @@ public class GamePanel extends Panel implements MouseListener {
 	private String prompt;
 	private int ticketplayercounter, ticketindex, playerscoringcounter, completedtindex, incompletedtindex,
 			routecounter;
-	public static GameState game;
+	private GameState game;
 	private Scanner sc;
 	private ArrayList<String> coordlist;
 
@@ -138,7 +138,10 @@ public class GamePanel extends Panel implements MouseListener {
 		}
 
 		g.drawImage(tickets[0], 1330, 5, 180, 115, null);
-		g.drawImage(cards.get("back"), 1330, 125, 180, 115, null);
+        g.drawImage(Helper.rotate(cards.get("back"), 90), 1330, 125, 74, 115, null);
+        if (game.getDiscardTop() != null) {
+            g.drawImage(Helper.rotate(cards.get(game.getDiscardTop()), 90), 1435, 125, 74, 115, null);
+        }
 		String[] deck = game.getCards();
 		for (int i = 0; i < 5; i++) {
 			g.drawImage(cards.get(deck[i]), 1330, 245 + 120 * i, 180, 115, null);
@@ -151,6 +154,7 @@ public class GamePanel extends Panel implements MouseListener {
 				drawntickets = game.drawTickets();
 				game.changeStatus("showing tickets");
 			}
+
 			g.setColor(Color.LIGHT_GRAY);
 			g.fillRect(1318, 210, 200, 450);
 			for (int i = 0; i < drawntickets.size(); i++) {
@@ -207,7 +211,7 @@ public class GamePanel extends Panel implements MouseListener {
 			}
 		}
 		if (game.status.equals("use station") || game.status.equals("buy route")
-				|| game.status.equals("choosing cities") || game.status.equals("buy tunnel")) {
+				|| game.status.equals("choosing cities") || game.status.equals("buy tunnel") || prompt.equals("no more tickets")) {
 			g.setFont(smallfont);
 			g.setColor(Color.red);
 			g.drawString(prompt, 240, 30);
@@ -215,17 +219,30 @@ public class GamePanel extends Panel implements MouseListener {
 		// drawing stations
 		for (int i = 0; i < cities.size(); i++) {
 			City c = game.searchCity(cities.get(i));
-			if (c.isoccupied()) {
+			if (c.hasStation()) {
 				g.drawImage(stations.get(c.getStation()), citiesX.get(i) - 16, citiesY.get(i) - 23, 30, 30, null);
 			}
 		}
 		// scoring panel
 		if (game.status.equals("game over")) {
+			Player currentp = game.getplayerarr()[playerscoringcounter];
+			if (currentp.getColor().equals("yellow")) {
+				g.setColor(new Color(250,236,112));
+			}
+			if (currentp.getColor().equals("blue")) {
+				g.setColor(new Color(101, 157, 247));
+			}
+			if (currentp.getColor().equals("green")) {
+				g.setColor(new Color(146, 247, 126));
+			}
+			if (currentp.getColor().equals("red")) {
+				g.setColor(new Color(255, 140, 140));
+			}
+
 			g.setFont(smallfont);
-			g.setColor(Color.LIGHT_GRAY);
+			
 			g.fillRect(1318, 100, 200, 700);
 			g.setColor(Color.black);
-			Player currentp = game.getplayerarr()[playerscoringcounter];
 			g.drawString(currentp.getColor() + " player", 1357, 135);
 			g.setColor(Color.red);
 			g.drawString("Completed Tickets", 1330, 165);
@@ -244,7 +261,8 @@ public class GamePanel extends Panel implements MouseListener {
 				}
 				g.drawImage(completedtickets.get(completedtindex).getImage(), 1330, 180, 180, 115, null);
 			}
-			//g.drawImage(incompletedtickets.get(completedtindex).getImage(), 1330, 175, 180, 115, null);
+			// g.drawImage(incompletedtickets.get(completedtindex).getImage(), 1330, 175,
+			// 180, 115, null);
 			g.drawImage(next2button, 1490, 220, 40, 35, null);
 			int completed = game.getPoints(completedtickets);
 			int incompleted = game.getPoints(incompletedtickets);
@@ -258,14 +276,16 @@ public class GamePanel extends Panel implements MouseListener {
 				g.drawImage(next2button, 1490, 395, 40, 35, null);
 			}
 			g.drawString("Total points: " + incompleted, 1330, 485);
-			g.drawString("Stations left: " + currentp.getStations(), 1330, 530);
-			g.drawString("Longest Route: " + game.findLongestRoute(currentp.getColor()), 1330, 575);
-			String europeanexpress = game.longestroute[1].equals(currentp.getColor())?"yes":"no";
-			g.drawString("European Express? " + europeanexpress, 1330, 620);
-			g.drawString("Final Score: ", 1340, 665);
-			//g.drawString("" + completed + " - " + incompleted + " + (4 * " + currentp.getStations() + ") + "
-					//+ currentp.getScore() + " =", 1330, 650);
-			g.drawString("" + currentp.getScore(), 1335, 680);
+			g.drawString("Stations left: " + currentp.getStations(), 1330, 520);
+			g.drawString("Longest Route: " + game.findLongestRoute(currentp.getColor()), 1330, 555);
+			String europeanexpress = game.longestroute[1].equals(currentp.getColor()) ? "yes" : "no";
+			g.drawString("European Express? ", 1330, 590);
+			g.drawString(europeanexpress, 1330, 625);
+			g.drawString("Final Score: ", 1320, 660);
+			// g.drawString("" + completed + " - " + incompleted + " + (4 * " +
+			// currentp.getStations() + ") + "
+			// + currentp.getScore() + " =", 1330, 650);
+			g.drawString("" + currentp.getScore(), 1335, 695);
 			g.drawImage(next3btn, 1368, 710, 100, 72, null);
 
 		}
@@ -398,8 +418,11 @@ public class GamePanel extends Panel implements MouseListener {
 		int x = e.getX();
 		int y = e.getY();
 		System.out.println(x + ", " + y);
-		//routecounter++;
-		//game.checkRoute(routecounter);
+		// routecounter++;
+		// game.checkRoute(routecounter);
+		//if(x > 1280 && x < 1300 && y > 810 && y < 825) {
+			//game.changeTurn();;
+		//}
 		if (!game.turnover()) {
 			if (game.status.equals("drawing starting tickets")) {
 				ArrayList<Ticket> tickets = startingtickets.get(ticketplayercounter);
@@ -414,8 +437,8 @@ public class GamePanel extends Panel implements MouseListener {
 					ticketplayercounter++;
 					if (ticketplayercounter >= 4) {
 						game.finishdrawingstartingtickets();
-						//game.changeStatus("game over");
-						//game.endGame();
+						// game.changeStatus("game over");
+						// game.endGame();
 						// change later
 					}
 				}
@@ -429,15 +452,14 @@ public class GamePanel extends Panel implements MouseListener {
 				if (x > 1368 && x < 1468 && y > 710 && y < 782) {
 					System.out.println("next");
 					playerscoringcounter++;
-					if(playerscoringcounter == 4) {
-						//switch to end panel
+					if (playerscoringcounter == 4) {
 						super.getFrame().toEnd();
 					}
 				}
 			} else if (game.status.equals("showing tickets")) {
 				for (int i = 0; i < drawntickets.size(); i++) {
 					if (x > 1330 && x < 1510 && y > 230 + 120 * i && y < 345 + 120 * i
-							&& numDiscardedTickets(drawntickets) < 2) {
+							&& (numDiscardedTickets(drawntickets) < 2 || drawntickets.get(i).isDiscarded())) {
 						drawntickets.get(i).discard();
 					}
 				}
@@ -482,14 +504,18 @@ public class GamePanel extends Panel implements MouseListener {
 				if (y / 5 % 24 != 0) {
 					switch (y / 120) {
 					case 0:
-						if (game.cardcounter() == 0)
-							//game.changeStatus("drawing tickets");
-							game.changeStatus("game over");
-							game.endGame();
+						if (game.cardcounter() == 0 && !game.getTickets().isEmpty())
+							game.changeStatus("drawing tickets");
+						else
+							prompt = "no more tickets";
+							//game.changeStatus("game over");
+						//game.endGame();
 						break;
 					case 1:
+						if(x < 1404) 
 						game.tryDrawCard("deck");
 						break;
+						
 					default:
 						game.tryDrawCard("" + (y / 120 - 2));
 					}
@@ -558,6 +584,7 @@ public class GamePanel extends Panel implements MouseListener {
 
 		} else {
 			if (x > 1230 && x < 1280 && y > 20 && y < 70) {
+				prompt = "";
 				game.changeTurn();
 			}
 		}
