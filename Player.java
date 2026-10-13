@@ -2,29 +2,35 @@
 import java.util.*;
 
 public class Player{
-
     private int score, numTrains, numStations;
     private HashMap<String, Integer> cards;
     private ArrayList<Ticket> tickets;
     private String color;
 
     public Player(String c){
-
         score = 0;
         numTrains = 45;
         numStations = 3;
         tickets = new ArrayList<>();
 
         cards = Helper.getEmptyDeck();
+        // for(String s : cards.keySet()) {
+        //	cards.put(s, cards.get(s) + 3);
+        // }
         color = c;
     }
 
+    public void setScore(int x) {
+    	score = x;
+    }
     public ArrayList<Ticket> getTickets(){
         return tickets;
     }
+
     public void addPoints(int x){
         score += x;
     }
+
     public void drawTicket(Ticket t){
         tickets.add(t);
     }
@@ -45,9 +51,11 @@ public class Player{
     public void useStation(){
         numStations--;
     }
+
     public void addTicket(Ticket t){
         tickets.add(t);
     }
+
     public String getColor(){
         return color;
     }
@@ -60,8 +68,24 @@ public class Player{
         return numStations;
     }
 
+    public void useTrains(int k) {
+    	numTrains -=k;
+    }
+
     public int numTrains(){
         return numTrains;
+    }
+
+    public HashMap<String, Integer> getCards(){
+    	return cards;
+    }
+    
+    public int getCards(String c) {
+    	return cards.get(c);
+    }
+    
+    public void useCards(String c, int x) {
+    	cards.put(c, cards.get(c) - x);
     }
     public String toString(){
         // StringBuilder sb = new StringBuilder();
