@@ -14,15 +14,6 @@ public class Helper {
         return colorMap;
     }
 
-    public static BufferedImage applyOpacity(BufferedImage image, float alpha) {
-        BufferedImage target = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
-        Graphics2D graphic = target.createGraphics();
-        graphic.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-        graphic.drawImage(image, 0, 0, null);
-        graphic.dispose();
-        return target;
-    }
-
     public static BufferedImage rotate(BufferedImage image, int angle) {
         double sin = Math.abs(Math.sin(Math.toRadians(angle))),
                cos = Math.abs(Math.cos(Math.toRadians(angle)));
@@ -37,5 +28,15 @@ public class Helper {
         graphic.drawRenderedImage(image, null);
         graphic.dispose();
         return rotated;
+    }
+
+    public static int getMax(int[] array) {
+        int max = 0;
+        for (int i = 0; i < array.length; i++) {
+            if (array[max] < array[i]) {
+                max = i;
+            }
+        }
+        return max;
     }
 }
