@@ -15,14 +15,18 @@ public class City {
     public String toString(){
         return name;
     }
-    public boolean addStation(String s){
-        if(station == null){
-            station = s;
-            return true;
-        }
-        return false;
+    
+    public boolean hasStation() {
+    	return station != null;
     }
 
+    public void addStation(String s){
+        if(station == null) {
+            station = s;
+        }
+    }
+
+  
     public String getStation(){
         return station;
     }
