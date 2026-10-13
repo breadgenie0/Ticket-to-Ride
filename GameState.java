@@ -5,20 +5,21 @@ import java.util.Map.Entry;
 
 public class GameState {
 
-	private Player[] playerArr;
+	public static Player[] playerArr;
 	private int cardCounter, playerTurn, endgame, extra;
-	private HashMap<String, Integer> deck;
+	private HashMap<String, Integer> deck, discard;
 	private String[] cards;
 	private ArrayList<Ticket> ticketPile, longRoutes;
 	private ArrayList<City> cities;
 	private HashMap<City, ArrayList<Route>> board;
 	private City currentCity;
 	private boolean turnover, drawingstartingtickets;
-	public String status, buyingwithcolor, purchasecity1, purchasecity2;
+	public String status, buyingwithcolor, purchasecity1, purchasecity2, discardTop;
 	public ArrayList<String> payingwithcards, extracards;
 	public ArrayList<Route> routes;
 	public Route purchaseRoute;
 	public String[] longestroute;
+
 	public GameState() {
 		try {
 			cities = readCities();
@@ -319,11 +320,12 @@ public class GameState {
 				ticketPile.add(t);
 			}
 		}
-		//Collections.shuffle(ticketPile);
-		//Collections.shuffle(longRoutes);
+		Collections.shuffle(ticketPile);
+		Collections.shuffle(longRoutes);
 	}
 
 	public Ticket drawTicket() {
+		System.out.println(ticketPile);
 		return ticketPile.remove(0);
 	}
 
@@ -471,6 +473,10 @@ public class GameState {
 	public String getCity2() {
 		return purchasecity2;
 	}
+	
+	public ArrayList<Ticket> getTickets(){
+		return ticketPile;
+	}
 	public void changeTurn() {
 		System.out.println("change turn");
 		currentCity = null;
@@ -497,9 +503,10 @@ public class GameState {
 	}
 
 //setting up game
-	private void createDecks() {
-		deck = new HashMap<String, Integer>();
+	public void createDecks() {
+		deck = Helper.getEmptyDeck();
 		discard = Helper.getEmptyDeck();
+        discardTop = null;
 		for (String s : Helper.colors) {
 			if (s.equals("loco")) {
 				deck.put(s, 14);
@@ -509,13 +516,20 @@ public class GameState {
 		}
 	}
 
+    private void reshuffleDeck() {
+        for (String s : Helper.colors) {
+			deck.put(s, discard.get(s));
+		}
+        discard = Helper.getEmptyDeck();
+    }
+
 	private String drawCard() {
 		int count = 0;
 		for (String s : Helper.colors) {
 			count += deck.get(s);
 		}
         if (count == 0) {
-            createDecks();
+            reshuffleDeck();
             return drawCard();
         }
 		int drawn = (int) (count * Math.random());
@@ -528,6 +542,11 @@ public class GameState {
 		}
 		return null;
 	}
+
+    public void discard(String c, int i) {
+        discard.put(c, discard.get(c) + i);
+        discardTop = c;
+    }
 
 	public String drawCard(int i) {
 		String k = cards[i];
@@ -543,10 +562,15 @@ public class GameState {
 		}
 		if (lococounter >= 3) {
 			for (int j = 0; j < 5; j++) {
+                discard(cards[j], 1);
 				cards[j] = drawCard();
 			}
 		}
 	}
+
+    public String getDiscardTop() {
+        return discardTop;
+    }
 
 	/*
 	 * buy black Amsterdam Bruxelles buy red red Bruxelles Paris buy blue blue loco
@@ -719,10 +743,10 @@ public class GameState {
 		for (Route r : routeslist) {
 			if(r.boughtColor() != null && r.boughtColor().equals(playerArr[playerTurn].getColor()) && ((r.getCity1().equals(city1) && r.getCity2().equals(city2))
 					|| (r.getCity2().equals(city1) && r.getCity1().equals(city2)))){
-				if(r.isDouble()) {
 					return "double route purchase not allowed";
-				}
 			}
+		}
+		for (Route r : routeslist) {
 			if (((r.getCity1().equals(city1) && r.getCity2().equals(city2))
 					|| (r.getCity2().equals(city1) && r.getCity1().equals(city2)))
 					&& (r.color().equals("gray") || r.color().equals(cardcolor) || cardcolor.equals("loco"))) {
@@ -751,9 +775,12 @@ public class GameState {
 		if (!purchaseRoute.isTunnel() && locomotives == 0) {
 			if(locomotivesused <= 0) {
 				playerArr[playerTurn].useCards(cardcolor, purchaseRoute.getLength());
+                discard(cardcolor, purchaseRoute.getLength());
 			}else {
 				playerArr[playerTurn].useCards("loco", locomotivesused);
+                discard("loco", locomotivesused);
 				playerArr[playerTurn].useCards(cardcolor, purchaseRoute.getLength() - locomotivesused);
+                discard(cardcolor, purchaseRoute.getLength() - locomotivesused);
 			}
 			purchaseRoute.buyRoute(playerArr[playerTurn].getColor());
 			playerArr[playerTurn].useTrains(purchaseRoute.getLength());
@@ -763,8 +790,13 @@ public class GameState {
 		}
 		if (locomotives != 0) {
 			if (locomotivecards >= locomotives) {
+				if(locomotives > locomotivesused) {
+					locomotivesused = locomotives;
+				}
 				playerArr[playerTurn].useCards("loco", locomotivesused);
+                discard("loco", locomotivesused);
 				playerArr[playerTurn].useCards(cardcolor, purchaseRoute.getLength() - locomotivesused);
+                discard(cardcolor, purchaseRoute.getLength() - locomotivesused);
 				purchaseRoute.buyRoute(playerArr[playerTurn].getColor());
 				playerArr[playerTurn].useTrains(purchaseRoute.getLength());
 				playerArr[playerTurn].addPoints(purchaseRoute.getPoints());
@@ -786,9 +818,12 @@ public class GameState {
 		if(extra == 0) {
 			if(locomotivesused <= 0) {
 				playerArr[playerTurn].useCards(cardcolor, purchaseRoute.getLength());
+                discard(cardcolor, purchaseRoute.getLength());
 			}else {
 				playerArr[playerTurn].useCards("loco", locomotivesused);
+                discard("loco", locomotivesused);
 				playerArr[playerTurn].useCards(cardcolor, purchaseRoute.getLength() - locomotivesused);
+                discard("loco", purchaseRoute.getLength() - locomotivesused);
 			}
 			purchaseRoute.buyRoute(playerArr[playerTurn].getColor());
 			playerArr[playerTurn].addPoints(purchaseRoute.getPoints());
@@ -815,6 +850,7 @@ public class GameState {
 			if(extra <= playerArr[playerTurn].getCards(c) - usedcards) {
 				//playerArr[playerTurn].useCards("loco", locomotivesused);
 				playerArr[playerTurn].useCards(c, purchaseRoute.getLength()+ extra);
+                discard(c, purchaseRoute.getLength() + extra);
 				purchaseRoute.buyRoute(playerArr[playerTurn].getColor());
 				playerArr[playerTurn].addPoints(purchaseRoute.getPoints());
 				//endTurn();
@@ -828,7 +864,9 @@ public class GameState {
 		if(c.equals("loco")) {
 			if(extra <= playerArr[playerTurn].getCards("loco") - locomotivesused) {
 				playerArr[playerTurn].useCards("loco", locomotivesused + extra);
+                discard("loco", locomotivesused + extra);
 				playerArr[playerTurn].useCards(buyingwithcolor, purchaseRoute.getLength() - locomotivesused);
+                discard(buyingwithcolor, purchaseRoute.getLength() - locomotivesused);
 				purchaseRoute.buyRoute(playerArr[playerTurn].getColor());
 				playerArr[playerTurn].addPoints(purchaseRoute.getPoints());
 				playerArr[playerTurn].useTrains(purchaseRoute.getLength());
@@ -872,7 +910,7 @@ public class GameState {
 				owned = r;
 			}
 		}
-		if (!c.isoccupied() && owned != null) {
+		if (!c.hasStation() && owned != null) {
 			return true;
 		}
 		return false;
@@ -911,9 +949,16 @@ public class GameState {
 
 	public ArrayList<Ticket> drawTickets() {
 		ArrayList<Ticket> tlist = new ArrayList<>();
-		for (int i = 0; i < 3; i++) {
-			tlist.add(drawTicket());
+		if(ticketPile.size() < 3) {
+			for (int i = 0; i < ticketPile.size(); i++) {
+				tlist.add(drawTicket());
+			}
+		}else {
+			for (int i = 0; i < 3; i++) {
+				tlist.add(drawTicket());
+			}
 		}
+		
 		return tlist;
 
 	}
@@ -946,9 +991,8 @@ public class GameState {
 				p.addPoints(10);
 			}
 			int finalscore = completed - incompleted + 4 * p.getStations() + p.getScore();
-			p.addPoints(finalscore);
+			p.setScore(finalscore);
 		}
-
 	}
 
 	public int checkStations(Player p) {
