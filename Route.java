@@ -1,15 +1,14 @@
 
 public class Route {
 
-    private boolean isStation;
     private int length, points, locomotives;
     private String color, boughtColor;
-    private boolean isTunnel;
+    private boolean isTunnel, doubleRoute, hasStation;
     private City city1, city2;
 
     public Route(City c1, City c2, int l, String c, boolean t, int lo) {
-        //des = d;
-        isStation = false;
+        // destination = d;
+        hasStation = false;
         city1 = c1;
         city2 = c2;
         length = l;
@@ -17,6 +16,7 @@ public class Route {
         isTunnel = t;
         locomotives = lo;
         boughtColor = null;
+        //doubleRoute = d;
         switch (length) {
             case 1:
                 points = 1;
@@ -38,9 +38,15 @@ public class Route {
         }
     }
 
+    
+    public boolean isDouble() {
+    	return doubleRoute;
+    }
+
     // public City getDestination(){
-    //     return des;
+    //     return destination;
     // }
+
     public City getCity1(){
         return city1;
     }
@@ -68,9 +74,10 @@ public class Route {
     public String boughtColor(){
         return boughtColor;
     }
+    
     public void setStation(String c){
         //color = c;
-        isStation = true;
+        hasStation = true;
     }
 
     public void buyRoute(String c){
@@ -80,8 +87,9 @@ public class Route {
     public boolean isTunnel(){
         return isTunnel;
     }
-    public boolean isStation(){
-        return isStation;
+
+    public boolean hasStation(){
+        return hasStation;
     }
 
     public String toString(){
